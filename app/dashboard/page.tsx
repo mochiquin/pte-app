@@ -72,23 +72,26 @@ export default async function DashboardPage() {
         
         {submissions && submissions.length > 0 ? (
           submissions.map((sub) => (
-            <Card key={sub.id} className="p-4 flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                   {/* @ts-ignore - joined data type issue */}
-                  <Badge variant="outline" className="text-xs">{sub.questions?.type}</Badge>
-                   {/* @ts-ignore */}
-                  <span className="font-medium text-sm">{sub.questions?.title || 'Unknown Question'}</span>
+            <Link href={`/dashboard/submission/${sub.id}`} key={sub.id} className="block group">
+              <Card className="p-4 flex items-center justify-between group-hover:shadow-md transition-shadow">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                     {/* @ts-ignore */}
+                    <Badge variant="outline" className="text-xs">{sub.questions?.type}</Badge>
+                     {/* @ts-ignore */}
+                    <span className="font-medium text-sm group-hover:text-blue-600 transition-colors">{sub.questions?.title || 'Unknown Question'}</span>
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    {new Date(sub.created_at).toLocaleString()}
+                  </p>
                 </div>
-                <p className="text-xs text-gray-400">
-                  {new Date(sub.created_at).toLocaleString()}
-                </p>
-              </div>
-              
-              {sub.audio_url && (
-                <audio src={sub.audio_url} controls className="h-8 w-32" />
-              )}
-            </Card>
+                
+                {/* Visual indicator instead of inline player to encourage clicking through */}
+                <div className="text-gray-400 text-sm flex items-center gap-1 group-hover:text-blue-600">
+                  Review <span className="text-lg">→</span>
+                </div>
+              </Card>
+            </Link>
           ))
         ) : (
           <Card className="p-8 text-center text-gray-500 bg-slate-50 border-dashed">

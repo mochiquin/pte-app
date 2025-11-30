@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { Submission, Question } from '@/types'
 
 export async function submitPractice(formData: FormData) {
   const supabase = await createClient()
@@ -14,7 +15,7 @@ export async function submitPractice(formData: FormData) {
 
   const questionId = formData.get('questionId') as string
   const audioFile = formData.get('audio') as File
-  const transcript = formData.get('transcript') as string | null // Optional if frontend does STT, or we do it later
+  const transcript = formData.get('transcript') as string | null 
 
   if (!questionId || !audioFile) {
     return { error: 'Missing required fields' }
@@ -34,8 +35,7 @@ export async function submitPractice(formData: FormData) {
     return { error: 'Failed to upload audio' }
   }
 
-  // 3. Get Public URL (optional, or just store path)
-  // Usually we store the path or get the public URL if the bucket is public
+  // 3. Get Public URL
   const { data: { publicUrl } } = supabase.storage
     .from('practice_audio')
     .getPublicUrl(filename)
@@ -48,7 +48,7 @@ export async function submitPractice(formData: FormData) {
       question_id: questionId,
       audio_url: publicUrl,
       transcript: transcript || null,
-      score: null // AI scoring to be added later
+      score: null 
     })
 
   if (dbError) {
@@ -60,3 +60,26 @@ export async function submitPractice(formData: FormData) {
   return { success: true }
 }
 
+export async function getSubmission(id: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return null
+
+  const { data, error } = await supabase
+    .from('submissions')
+    .select('*, questions(*)')
+    .eq('id', id)
+    .single()
+
+  if (error || !data) {
+    return null
+  }
+
+  // Check ownership (security)
+  if (data.user_id !== user.id) {
+    return null
+  }
+
+  return data as (Submission & { questions: Question })
+}
